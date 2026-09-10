@@ -13,6 +13,7 @@ var H = { lv: function () { return GD; }, gd: function (a, b, c) { return GD >= 
   num: function (v, u) { return { k: 'n', v: v, u: u }; }, pair: function (a, b, u1, u2) { return { k: 'pair', a: a, b: b, u1: u1, u2: u2 }; },
   pk: function (opts, pick, v, u, tail) { return { k: 'pick', opts: opts, pick: pick, v: v, u: u, tail: tail || '多い' }; },
   P: function (t, s, ans) { return { t: t, s: s, ans: ans }; }, tm: function (h, m) { return h + '時' + (m ? m + '分' : ''); }, rng: rng, esc: function (t) { return String(t); }, shuffle: function (a) { return a; } };
+if (subject !== 'math' && fs.existsSync(path.join(__dirname, '..', 'packs', grade, 'math.js'))) require(path.join(__dirname, '..', 'packs', grade, 'math.js'));
 var pack = PACKS.get(grade, subject, H);
 var gens = pack.gen, keys = Object.keys(gens), bad = 0, total = 0;
 function evalSide(s) {   // "6+6+3" / "2×3+4" → 数（+ - × のみ）。読めなければ null
@@ -37,6 +38,9 @@ keys.forEach(function (k) {
         if (!p || typeof p.t !== 'string' || !p.t.trim()) err = 'no text';
         else if (!p.ans || !p.ans.k) err = 'no ans';
         else if (p.ans.k === 'n' && (typeof p.ans.v !== 'number' || p.ans.v < 0 || p.ans.v !== Math.round(p.ans.v))) err = 'bad n ' + p.ans.v;
+        else if (p.ans.k === 'int' && (typeof p.ans.v !== 'number' || p.ans.v !== Math.round(p.ans.v))) err = 'bad int ' + p.ans.v;
+        else if (p.ans.k === 'dec' && (typeof p.ans.v !== 'number' || !isFinite(p.ans.v))) err = 'bad dec ' + p.ans.v;
+        else if (p.ans.k === 'expr' && (typeof p.ans.v !== 'string' || !p.ans.v.trim() || /NaN|undefined|\+-|--|\+\+/.test(p.ans.v))) err = 'bad expr ' + p.ans.v;
         else if (p.ans.k === 'pair' && (p.ans.a < 0 || p.ans.b < 0 || (PAIR_MAX[p.ans.u2] !== undefined && p.ans.b > PAIR_MAX[p.ans.u2]))) err = 'bad pair ' + p.ans.a + p.ans.u1 + p.ans.b + p.ans.u2;
         else if (p.ans.k === 'pick' && (p.ans.opts.indexOf(p.ans.pick) < 0 || p.ans.v <= 0)) err = 'bad pick';
         else if (/NaN|undefined/.test(p.t + JSON.stringify(p.ans) + (p.s || []).join())) err = 'NaN/undefined in text';

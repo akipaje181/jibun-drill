@@ -657,6 +657,9 @@
   .frac .num{height:44px; width:72px}
   .frac i{display:block; width:100%; height:2px; background:var(--ink); margin:2px 0}
   .num.sm{width:64px}
+  .unit.pre{font-family:var(--f-round); font-size:22px; font-weight:700; color:var(--ink)}
+  .keys{display:flex; flex-wrap:wrap; gap:6px; width:100%; margin-top:6px}
+  .key{min-width:42px; min-height:40px; padding:4px 10px; font-family:var(--f-round); font-size:18px; border:1.5px solid var(--rule); border-radius:8px; background:var(--field); color:var(--ink)}
   .ccard.plain{flex-direction:column; align-items:stretch; gap:6px}
   .stp .muted{margin-right:auto}
 </style>
@@ -780,6 +783,8 @@
 <script src="./packs/e2/math.js"></script>
 <script src="./packs/e2/calc.js"></script>
 <script src="./packs/e2/kanji.js"></script>
+<script src="./packs/j1/math.js"></script>
+<script src="./packs/j1/calc.js"></script>
 <script>
 (function () {
   var DATA = { tests: [] };            // 固定の テストは なし。テストの ページは 利用者が 作る
@@ -1177,7 +1182,20 @@
         ngb.addEventListener('click', function () { if (item.graded) return; item.pick = 'ng'; ngb.setAttribute('aria-pressed', 'true'); okb.setAttribute('aria-pressed', 'false'); });
         row.appendChild(el('span', 'lbl', T('after_write'))); row.appendChild(see); row.appendChild(rv); row.appendChild(okb); row.appendChild(ngb);
       }
+    } else if (a.k === 'expr') {   // 文字式: 文字入力＋よく使う 記号の ボタン
+      row.innerHTML = ''; row.appendChild(el('span', 'lbl', T('ans')));
+      if (a.pre) row.appendChild(el('span', 'unit pre', a.pre));
+      var ve = numField('', 'text'); ve.dataset.f = 'n'; ve.placeholder = '例：2x+3'; row.appendChild(ve);
+      if (a.u) row.appendChild(el('span', 'unit', a.u));
+      var kp = el('div', 'keys');
+      (a.keys || ['x', 'y', 'a', 'b', '²', 'π', '＋', '−', '/', '(', ')']).forEach(function (kch) {
+        var kb = el('button', 'key', kch); kb.type = 'button';
+        kb.addEventListener('click', function () { if (item.graded) return; var s = ve.selectionStart || ve.value.length, e2 = ve.selectionEnd || s; ve.value = ve.value.slice(0, s) + kch + ve.value.slice(e2); ve.focus(); try { ve.setSelectionRange(s + kch.length, s + kch.length); } catch (x) {} });
+        kp.appendChild(kb);
+      });
+      row.appendChild(kp);
     } else if (a.k === 'int') {   // 負の数も OK。「−」ボタンで 切りかえる
+      if (a.pre) row.appendChild(el('span', 'unit pre', a.pre));
       var neg = el('button', 'opt sign', '−'); neg.type = 'button'; neg.setAttribute('aria-pressed', 'false'); neg.title = 'マイナスに する';
       neg.addEventListener('click', function () { if (item.graded) return; item.neg = !item.neg; neg.setAttribute('aria-pressed', String(!!item.neg)); });
       row.appendChild(neg);
@@ -1208,6 +1226,36 @@
     return isNaN(v) ? null : v;
   }
   function normText(s) { return String(s).normalize('NFKC').toLowerCase().replace(/\s+/g, '').replace(/[。．.、，,!?！？]/g, ''); }
+  function normExpr(s) {   // 文字式を 比べられる 形に（全角→半角、−→-、²→^2、π→PI）
+    return String(s).normalize('NFKC').replace(/\s+/g, '').replace(/[−–ー―]/g, '-').replace(/[×✕]/g, '*').replace(/÷/g, '/').replace(/²/g, '^2').replace(/³/g, '^3').replace(/⁴/g, '^4').replace(/π/g, 'PI').replace(/[Ａ-Ｚａ-ｚ]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
+  }
+  function exprTerms(s) {   // いちばん 外側の ＋−で 分けた 項の 数
+    var d = 0, n = 1;
+    for (var i = 1; i < s.length; i++) { var c = s[i]; if (c === '(') d++; else if (c === ')') d--; else if ((c === '+' || c === '-') && d === 0 && !/[*\/^(]/.test(s[i - 1])) n++; }
+    return n;
+  }
+  function exprToCalc(s) {   // 2x → 2*x、3(x-2) → 3*(x-2)、ab → a*b、PI は 定数扱いの 変数
+    s = s.replace(/PI/g, 'Ⓟ');
+    for (var k = 0; k < 3; k++) s = s.replace(/(\d|\))([A-Za-zⓅ(])/g, '$1*$2').replace(/([A-Za-zⓅ])([A-Za-zⓅ(\d])/g, '$1*$2');
+    return s.replace(/Ⓟ/g, 'PI_');
+  }
+  function exprVars(s) { var m = {}; (s.match(/[A-Za-z]/g) || []).forEach(function (c) { m[c] = 1; }); return m; }
+  function sameExpr(user, ans) {
+    var u = normExpr(user), a = normExpr(ans);
+    if (!u) return null;
+    u = u.replace(/^[a-z]=/, '');                                  // 「y=3x」と 書いても よい
+    if (a.indexOf('*') < 0 && u.indexOf('*') >= 0) return false;   // 文字式では × を 省く
+    if (a.indexOf('(') < 0 && u.indexOf('(') >= 0) return false;   // かっこは はずす
+    if (exprTerms(u) !== exprTerms(a)) return false;               // 同類項を まとめる
+    var vs = exprVars(u.replace(/PI/g, '')), va = exprVars(a.replace(/PI/g, ''));
+    for (var k in vs) if (!va[k]) return false;
+    var cu = exprToCalc(u), ca = exprToCalc(a);
+    for (var t = 0; t < 4; t++) {
+      var vars = { PI_: 3.14159 + t * 0.37 }; for (var v in va) vars[v] = (t + 1) * 0.731 + (v.charCodeAt(0) % 7) * 0.523 - 2.1;
+      try { var x = evalExpr(cu, vars), y = evalExpr(ca, vars); if (!isFinite(x) || !isFinite(y) || Math.abs(x - y) > 1e-6 * Math.max(1, Math.abs(y))) return false; } catch (e) { return false; }
+    }
+    return true;
+  }
   function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { var t = a % b; a = b; b = t; } return a || 1; }
   function judgeItem(item) {
     var a = item.q.ans, card = item.card;
@@ -1226,6 +1274,7 @@
     if (a.k === 'int') { var iv = val(card, 'n'); if (iv === null) return null; return (item.neg ? -iv : iv) === a.v; }
     if (a.k === 'dec') { var dv = val(card, 'n', 'dec'); if (dv === null) return null; return Math.abs(dv - a.v) < 1e-9; }
     if (a.k === 'text') { var tv = val(card, 'n', 'text'); if (tv === null) return null; var alts = [a.v].concat(a.alts || []); return alts.some(function (x) { return normText(x) === normText(tv); }); }
+    if (a.k === 'expr') { var ev = val(card, 'n', 'text'); if (ev === null) return null; return sameExpr(ev, a.v) === true; }
     if (a.k === 'frac') {
       var w = val(card, 'w'), p = val(card, 'p'), q = val(card, 'q');
       if (p === null && w === null) return null;
@@ -1245,7 +1294,8 @@
     if (a.k === 'frac') return (a.d === 1 ? String(a.n) : (Math.abs(a.n) >= a.d ? (a.n < 0 ? '-' : '') + Math.floor(Math.abs(a.n) / a.d) + 'と' + (Math.abs(a.n) % a.d) + '/' + a.d : a.n + '/' + a.d)) + (a.u || '');
     if (a.k === 'dec') return fmtNum(a.v) + (a.u || '');
     if (a.k === 'text') return a.v;
-    return a.v + (a.u || '');
+    if (a.k === 'expr') return (a.pre || '') + String(a.v).replace(/-/g, '−') + (a.u || '');
+    return (a.pre || '') + String(a.v).replace(/-/g, '−') + (a.u || '');
   }
 
   // ---------- handwriting pad (vector strokes, redrawn on resize) ----------
@@ -2171,7 +2221,7 @@
     save(); delete testCache[id];
     return page;
   }
-  window.__jdDev = { createPage: createPage, charSVG: function (o) { return charSVG(o); }, game: function () { return game; }, addXp: function (n) { var ev = gameEvent(n, {}); save(); return ev; }, content: function () { return content; }, profile: profile, tplGen: tplGen, evalExpr: evalExpr };
+  window.__jdDev = { sameExpr: sameExpr, createPage: createPage, charSVG: function (o) { return charSVG(o); }, game: function () { return game; }, addXp: function (n) { var ev = gameEvent(n, {}); save(); return ev; }, content: function () { return content; }, profile: profile, tplGen: tplGen, evalExpr: evalExpr };
 
   // ---------- かんじ（2年 160字） ----------
   var kst = { g: null }; try { kst.g = localStorage.getItem(pkey('kg')); } catch (e) {}
