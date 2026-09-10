@@ -1,0 +1,7 @@
+# Supabase CLI の設定（supabase link 後に project_id を入れる）
+[functions.stripe-webhook]
+verify_jwt = false   # Stripe からの 呼び出しには JWT が ない（署名で 検証する）
+[functions.checkout]
+verify_jwt = true
+[functions.portal]
+verify_jwt = true

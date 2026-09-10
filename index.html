@@ -662,6 +662,8 @@
   .key{min-width:42px; min-height:40px; padding:4px 10px; font-family:var(--f-round); font-size:18px; border:1.5px solid var(--rule); border-radius:8px; background:var(--field); color:var(--ink)}
   .ccard.plain{flex-direction:column; align-items:stretch; gap:6px}
   .stp .muted{margin-right:auto}
+  .acct{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; margin:0 0 12px; padding:10px 14px; border-radius:12px; background:var(--a2w); border:1.5px solid var(--a2); color:var(--ink); text-align:left; font-size:13px}
+  .acct b{font-family:var(--f-round); color:var(--a2); white-space:nowrap}
 </style>
 </head>
 <body>
@@ -745,6 +747,10 @@
     </div>
   </section>
 
+  <section id="v-account" hidden>
+    <div class="wrap" id="account"></div>
+  </section>
+
   <section id="v-setup" hidden>
     <div class="wrap" id="setup"></div>
   </section>
@@ -779,6 +785,8 @@
   <button class="btn" id="btnMain">まるつけ</button>
 </div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
 <script src="./packs/index.js"></script>
 <script src="./packs/e2/math.js"></script>
 <script src="./packs/e2/calc.js"></script>
@@ -797,7 +805,7 @@
 
   // ---------- ことばの 調子（tone）: kana = ひらがな 分かち書き（小1〜3）／ normal = ふつうの 書き方（小4〜中3） ----------
   var TX = {
-    kana: { home: 'ホーム', grow: 'マイルーム', scan: 'テストの けっかを 入れる', kanji: 'かんじ', daily: 'きょうの 5問', keisan: 'けいさん 1まい', solve: 'テストの プリント', weak: 'にがてを とく', cal: 'カレンダー', lessons: 'せんせいの ワンポイント', records: 'きろく', print: 'いんさつ', help: 'つかいかた', make: 'じぶんで つくる', setup: 'はじめに',
+    kana: { home: 'ホーム', grow: 'マイルーム', scan: 'テストの けっかを 入れる', kanji: 'かんじ', daily: 'きょうの 5問', keisan: 'けいさん 1まい', solve: 'テストの プリント', weak: 'にがてを とく', cal: 'カレンダー', lessons: 'せんせいの ワンポイント', records: 'きろく', print: 'いんさつ', help: 'つかいかた', make: 'じぶんで つくる', setup: 'はじめに', account: 'おうちの人の アカウント',
       ans: 'こたえ', ans_num: 'こたえ（数字で）', shiki: 'しき', pad_shiki: '（しき）', pad_hissan: '（ひっさん）', pad_hissan_zu: '（ひっさん・図）', pad_free: '（手書き）', eraser: 'けしゴム', thin: 'ほそい', mid: 'ふつう', thick: 'ふとい',
       finger: '指で かく', finger_end: 'おわり', finger_on: '指で かけます。おわったら「おわり」', finger_off: 'ペンで かく・指は スクロール', clear_all: 'ぜんぶ けす', self_ok: '○ あっていた', self_ng: '✗ ちがった', see_ans: 'こたえを 見る', after_write: '書いたら', difficulty: 'むずかしさ',
       grade_btn: 'まるつけ', again: 'もういちど', next5: 'つぎの 5問 →', start5: '5問 スタート', another5: 'べつの 5問 →', fix_n: 'まちがえた {n}問を なおす', go_next: 'つぎへ すすむ',
@@ -805,7 +813,7 @@
       which_unit: 'どの たんげんを やる？', hello_q: 'きょうは どれから やる？', g1: 'まいにち やること', g2: 'テストの ために', g3: '見る・つかう',
       d_daily: 'たんげんを えらんで、まいかい ちがう 5問', d_keisan: 'まいにち 1まい 10問（ぜんぶで {n}回）', d_scan: 'けっかを 入れると、その子用の プリントが できる', d_solve: 'テストから 作った プリント（{n}セット）', d_weak: 'にがてな 型から 5問（どれかは ひみつ）', d_make: 'カードや 穴あき問題を 作る（おうちの人）',
       d_cal: 'テストの よてい・やった日', d_grow: 'ドリまる・なかま・もくひょう', d_grow2: 'レベル・もくひょう・せってい', d_records: 'せいかいりつ・にがて', d_lessons: '{n}の 型の かんがえ方', d_print: '紙の プリントを 作る・PDF', d_help: 'この アプリの せつめい' },
-    normal: { home: 'ホーム', grow: 'マイページ', scan: 'テストの結果を入れる', kanji: '漢字', daily: '今日の5問', keisan: '計算1枚', solve: 'テストのプリント', weak: '苦手を解く', cal: 'カレンダー', lessons: '先生のワンポイント', records: '記録', print: '印刷', help: '使い方', make: '自分で作る', setup: 'はじめに',
+    normal: { home: 'ホーム', grow: 'マイページ', scan: 'テストの結果を入れる', kanji: '漢字', daily: '今日の5問', keisan: '計算1枚', solve: 'テストのプリント', weak: '苦手を解く', cal: 'カレンダー', lessons: '先生のワンポイント', records: '記録', print: '印刷', help: '使い方', make: '自分で作る', setup: 'はじめに', account: '保護者アカウント',
       ans: '答え', ans_num: '答え（数字で）', shiki: '式', pad_shiki: '（式）', pad_hissan: '（計算）', pad_hissan_zu: '（計算・図）', pad_free: '（手書き）', eraser: '消しゴム', thin: '細い', mid: 'ふつう', thick: '太い',
       finger: '指で書く', finger_end: '終わり', finger_on: '指で書けます。終わったら「終わり」', finger_off: 'ペンで書く・指はスクロール', clear_all: '全部消す', self_ok: '○ 合っていた', self_ng: '✗ 違った', see_ans: '答えを見る', after_write: '書いたら', difficulty: '難しさ',
       grade_btn: '採点', again: 'もう一度', next5: '次の5問 →', start5: '5問スタート', another5: '別の5問 →', fix_n: '間違えた{n}問を直す', go_next: '次へ進む',
@@ -911,7 +919,7 @@
     return p;
   }
   var prof = loadProfiles();
-  function saveProfiles() { try { localStorage.setItem(PLS, JSON.stringify(prof)); } catch (e) {} }
+  function saveProfiles() { try { localStorage.setItem(PLS, JSON.stringify(prof)); } catch (e) {} cloudPush('profiles', prof); }
   function profile() { for (var i = 0; i < prof.list.length; i++) if (prof.list[i].id === prof.current) return prof.list[i]; return null; }
   function addProfile(name, grade) {
     var p = { id: 'c' + Date.now().toString(36), name: name, grade: grade, createdAt: new Date().toISOString() };
@@ -928,7 +936,7 @@
   // ---------- じぶんで つくった もんだい（学年ごと。子どもが かわっても 共通） ----------
   var CLS = 'jibun.content';
   var content = (function () { var c = null; try { c = JSON.parse(localStorage.getItem(CLS) || 'null'); } catch (e) {} if (!c || !c.units) c = { v: 1, units: [] }; return c; })();
-  function saveContent() { try { localStorage.setItem(CLS, JSON.stringify(content)); } catch (e) {} }
+  function saveContent() { try { localStorage.setItem(CLS, JSON.stringify(content)); } catch (e) {} cloudPush('content', content); }
   function customUnits(g) { return content.units.filter(function (u) { return u.grade === (g || gradeId()); }); }
   function uid(p) { return (p || 'x') + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36); }
 
@@ -1106,7 +1114,7 @@
   applyPack();
   var recs = load();
   var game = null;   // set by initGame() once the helpers below exist
-  function save() { try { localStorage.setItem(LS, JSON.stringify(recs)); } catch (e) {} }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(recs)); } catch (e) {} if (prof.current) cloudPush('rec.' + prof.current, recs); }
   function recFor(id) { return recs[id] || (recs[id] = { test: id, sheets: {}, types: {}, updatedAt: null }); }
   function bump(key, ok) { var g = recs._types[key] || (recs._types[key] = { ok: 0, ng: 0 }); g[ok ? 'ok' : 'ng']++; }
   function logAttempt(e) { recs._log.push(e); if (recs._log.length > LOGMAX) recs._log.splice(0, recs._log.length - LOGMAX); }
@@ -1606,13 +1614,13 @@
   $('btnAgain').addEventListener('click', function () { if (!cur) return; if (cur.againAction) cur.againAction(); else cur.again(); });
 
   // ---------- views ----------
-  var VIEWS = ['home', 'grow', 'scan', 'daily', 'keisan', 'kanji', 'solve', 'weak', 'cal', 'lessons', 'records', 'print', 'help', 'make', 'setup'];
+  var VIEWS = ['home', 'grow', 'scan', 'daily', 'keisan', 'kanji', 'solve', 'weak', 'cal', 'lessons', 'records', 'print', 'help', 'make', 'setup', 'account'];
   function titleOf(v) { return v === 'home' ? appName() : T(v); }
   var view = 'home';
   function show(v) {
     view = v;
     VIEWS.forEach(function (n) { $('v-' + n).hidden = n !== v; });
-    $('back').hidden = v === 'home' || (v === 'setup' && !profile());
+    $('back').hidden = v === 'home' || (v === 'setup' && !profile()) || (v === 'account' && gated());
     $('ttl').textContent = titleOf(v);
     $('tabs').hidden = v !== 'solve';
     $('bar').hidden = !(cur && cur.view === v);
@@ -1652,6 +1660,7 @@
     $('homeNote').textContent = gradeInfo().name + '　' + (PACK_MATH ? TYPE_ORDER.length + 'の 型' : '型は まだ なし') + (customUnits().length ? '　じぶんで つくった ' + customUnits().length + 'カテゴリー' : '');
 
     var box = $('tiles'); box.innerHTML = '';
+    if (hasCloud()) { var ac = acctLine(); if (ac) { var acard = btn('acct', null, function () { renderAccount(); show('account'); }); acard.appendChild(el('span', null, ac.text)); acard.appendChild(el('b', null, ac.cta)); box.appendChild(acard); } }
     var g1 = [], g2 = [], g3;
     if (UNITS.length) g1.push(['daily', T('daily'), T('d_daily')]);
     if (KAI_MAX) g1.push(['keisan', T('keisan'), T('d_keisan', KAI_MAX)]);
@@ -1700,6 +1709,7 @@
     });
   }
   function open(v) {
+    if (gated() && ['grow', 'records', 'help', 'account'].indexOf(v) < 0) { renderAccount(); show('account'); return; }
     welcomeGone = true;   // ホームから 出たら 声かけは しまう
     if (v === 'grow') renderGrow();
     if (v === 'kanji') { if (!(cur && cur.view === 'kanji')) renderKanji(); }
@@ -3704,6 +3714,7 @@
       sp.appendChild(el('h3', null, '子どもを きりかえる')); sp.appendChild(sw);
     }
     var acts = el('div', 'rec-actions');
+    if (hasCloud()) acts.appendChild(btn('linkbtn', 'アカウント・お支払い・同期 →', function () { renderAccount(); show('account'); }));
     acts.appendChild(btn('linkbtn', '＋ ほかの 子どもを 登録する', function () { setupMode = 'add'; renderSetup(); show('setup'); }));
     if (prof.list.length > 1) acts.appendChild(btn('linkbtn shu', 'この 子どもを けす（きろくも 消えます）', function () {
       if (!confirm('「' + p.name + '」と その きろくを けします。元に もどせません。よろしいですか？')) return;
@@ -3935,13 +3946,218 @@
     p.appendChild(acts); return p;
   }
 
+  // ---------- アカウント（Supabase）・同期・購入（Stripe） ----------
+  // config.js に 接続先が 無い あいだは 何も 出ず、端末だけで 動く
+  var CFG = window.JIBUN_CONFIG || {};
+  var sb = null;
+  try { if (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase) sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey); } catch (e) { sb = null; }
+  var acct = { user: null, ent: null, ready: !sb, booted: false };
+  var ENT_LS = 'jibun.ent', STAMP_LS = 'jibun.syncstamp', Q_LS = 'jibun.syncq';
+  function hasCloud() { return !!sb; }
+  function entInfo() {   // 利用権の いまの 状態
+    var e = acct.ent; if (!e) return { state: 'none', days: 0 };
+    var end = e.current_period_end ? new Date(e.current_period_end).getTime() : 0, left = Math.ceil((end - Date.now()) / 86400000);
+    if (e.status === 'trial') return left > 0 ? { state: 'trial', days: left, end: end } : { state: 'expired', days: 0, end: end };
+    if (e.status === 'active') return left > -1 ? { state: 'active', days: left, end: end, plan: e.plan } : { state: 'expired', days: 0, end: end };
+    if (e.status === 'past_due') return left > -7 ? { state: 'past_due', days: left, end: end } : { state: 'expired', days: 0, end: end };
+    return { state: 'expired', days: 0, end: end };
+  }
+  function gated() { if (!hasCloud()) return false; if (!acct.ready) return true; if (!acct.user) return true; var s = entInfo().state; return s === 'expired' || s === 'none'; }
+  function fmtDate(t) { var d = new Date(t); return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(); }
+  function acctLine() {
+    if (!acct.user) return { text: 'ログインすると 記録が 保存・同期されます', cta: 'ログイン →' };
+    var i = entInfo();
+    if (i.state === 'trial') return { text: '無料期間 あと ' + i.days + '日（' + fmtDate(i.end) + 'まで）。3日以内の 購入で 1か月 無料', cta: '購入する →' };
+    if (i.state === 'past_due') return { text: 'お支払いが 確認できません。カードを 確認して ください', cta: '確認する →' };
+    if (i.state === 'active') return null;
+    return { text: '無料期間が 終わりました', cta: '購入する →' };
+  }
+  function loadEntCache() { try { var c = JSON.parse(localStorage.getItem(ENT_LS) || 'null'); if (c && c.user_id === (acct.user && acct.user.id) && Date.now() - c.at < 7 * 86400000) acct.ent = c.ent; } catch (e) {} }
+  function fetchEnt() {
+    if (!sb || !acct.user) return Promise.resolve();
+    return sb.from('entitlements').select('*').eq('user_id', acct.user.id).maybeSingle().then(function (res) {
+      if (res.error) { loadEntCache(); return; }
+      acct.ent = res.data || { status: 'trial', current_period_end: new Date(Date.now() + (CFG.trialDays || 3) * 86400000).toISOString() };
+      try { localStorage.setItem(ENT_LS, JSON.stringify({ user_id: acct.user.id, at: Date.now(), ent: acct.ent })); } catch (e) {}
+    }, function () { loadEntCache(); });
+  }
+  // --- 同期: docs テーブルに JSON を まるごと。新しい updated_at が 勝つ ---
+  var stamps = (function () { try { return JSON.parse(localStorage.getItem(STAMP_LS) || '{}') || {}; } catch (e) { return {}; } })();
+  var queue = (function () { try { return JSON.parse(localStorage.getItem(Q_LS) || '{}') || {}; } catch (e) { return {}; } })();
+  var flushTimer = null, flushing = false;
+  function saveStamps() { try { localStorage.setItem(STAMP_LS, JSON.stringify(stamps)); } catch (e) {} }
+  function saveQueue() { try { localStorage.setItem(Q_LS, JSON.stringify(queue)); } catch (e) {} }
+  function cloudPush(key, data) {
+    if (!sb) return;
+    var now = new Date().toISOString();
+    queue[key] = { data: data, updated_at: now }; stamps[key] = now; saveQueue(); saveStamps();
+    if (flushTimer) clearTimeout(flushTimer);
+    flushTimer = setTimeout(flushQueue, 1500);
+  }
+  function flushQueue() {
+    flushTimer = null;
+    if (!sb || !acct.user || flushing) return;
+    var keys = Object.keys(queue); if (!keys.length) return;
+    flushing = true;
+    var rows = keys.map(function (k) { return { user_id: acct.user.id, key: k, data: queue[k].data, updated_at: queue[k].updated_at }; });
+    sb.from('docs').upsert(rows).then(function (res) {
+      flushing = false;
+      if (res.error) { setSyncState('offline'); flushTimer = setTimeout(flushQueue, 15000); return; }
+      keys.forEach(function (k) { delete queue[k]; }); saveQueue(); setSyncState('ok');
+      if (Object.keys(queue).length) flushTimer = setTimeout(flushQueue, 500);
+    }, function () { flushing = false; setSyncState('offline'); flushTimer = setTimeout(flushQueue, 15000); });
+  }
+  var syncState = '';
+  function setSyncState(s) { syncState = s; var e = $('syncdot'); if (e) e.className = 'syncdot ' + s; }
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') { if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; } flushQueue(); } });
+  window.addEventListener('online', function () { flushQueue(); });
+  function localDoc(key) {   // いまの 端末の ドキュメント
+    var raw = null; try { raw = localStorage.getItem(key === 'profiles' ? PLS : key === 'content' ? CLS : 'jibun.' + key); } catch (e) {}
+    if (!raw) return null; try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+  function writeLocalDoc(key, data) { try { localStorage.setItem(key === 'profiles' ? PLS : key === 'content' ? CLS : 'jibun.' + key, JSON.stringify(data)); } catch (e) {} }
+  function pullAll() {   // ログイン後: クラウドと 端末を くらべて、新しい ほうに そろえる。端末が 変わったら true
+    if (!sb || !acct.user) return Promise.resolve(false);
+    return sb.from('docs').select('key,data,updated_at').eq('user_id', acct.user.id).then(function (res) {
+      if (res.error) { setSyncState('offline'); return false; }
+      var changed = false, seen = {};
+      (res.data || []).forEach(function (row) {
+        seen[row.key] = 1;
+        var mine = stamps[row.key], local = localDoc(row.key);
+        if (queue[row.key] && queue[row.key].updated_at > row.updated_at) return;           // 送信待ちの ほうが 新しい
+        if (!local || !mine || row.updated_at > mine) { writeLocalDoc(row.key, row.data); stamps[row.key] = row.updated_at; changed = true; }
+      });
+      // クラウドに 無い 端末の データは 送る（はじめての 同期）
+      var keys = ['profiles', 'content']; (localDoc('profiles') || { list: [] }).list.forEach(function (c) { keys.push('rec.' + c.id); });
+      keys.forEach(function (k) { if (!seen[k]) { var d = localDoc(k); if (d) cloudPush(k, d); } });
+      saveStamps(); setSyncState('ok');
+      return changed;
+    }, function () { setSyncState('offline'); return false; });
+  }
+  function clearLocal() {   // ログアウト: この 端末の 記録を 消す（家族以外の 端末でも 安心）
+    var ks = []; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('jibun.') === 0) ks.push(k); } ks.forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+  }
+  // --- 画面 ---
+  var aform = { mode: 'login', msg: '', busy: false };
+  function renderAccount() {
+    var box = $('account'); box.innerHTML = ''; cur = null; $('bar').hidden = true;
+    var p = el('div', 'panel');
+    if (!hasCloud()) { p.appendChild(el('h3', null, 'アカウントは 準備中です')); p.appendChild(el('p', 'muted', 'いまは この 端末の 中だけで 動いています。記録は「きろく」から 書き出せます。')); box.appendChild(p); return; }
+    if (!acct.user) {
+      p.appendChild(el('h3', null, aform.mode === 'signup' ? '保護者の アカウントを つくる' : aform.mode === 'reset' ? 'パスワードを 忘れたとき' : 'ログイン（おうちの人）'));
+      p.appendChild(el('p', 'muted', aform.mode === 'signup' ? 'メールアドレスと パスワード（8文字以上）を 決めて ください。登録した 日から ' + (CFG.trialDays || 3) + '日間は 無料で すべて 使えます。' : aform.mode === 'reset' ? 'メールアドレスを 入れると、パスワードを 決めなおす リンクを 送ります。' : '記録と 自作の もんだいを 保存・同期し、ほかの 端末でも 使うために ログインします。'));
+      var em = txt('', 'メールアドレス'); em.type = 'email'; em.autocomplete = 'email'; em.setAttribute('autocapitalize', 'off'); p.appendChild(fld('メールアドレス', em));
+      var pw = null; if (aform.mode !== 'reset') { pw = txt('', 'パスワード（8文字以上）'); pw.type = 'password'; pw.autocomplete = aform.mode === 'signup' ? 'new-password' : 'current-password'; p.appendChild(fld('パスワード', pw)); }
+      if (aform.msg) p.appendChild(el('p', 'muted shu', aform.msg));
+      var go = btn('btn', aform.busy ? '…' : aform.mode === 'signup' ? '登録して はじめる' : aform.mode === 'reset' ? 'リンクを 送る' : 'ログイン', function () {
+        if (aform.busy) return; var e = em.value.trim(), w = pw ? pw.value : '';
+        if (!e) { aform.msg = 'メールアドレスを 入れて ください。'; renderAccount(); return; }
+        if (aform.mode !== 'reset' && w.length < 8) { aform.msg = 'パスワードは 8文字以上に して ください。'; renderAccount(); return; }
+        aform.busy = true; aform.msg = ''; renderAccount();
+        var pr = aform.mode === 'signup' ? sb.auth.signUp({ email: e, password: w, options: { emailRedirectTo: CFG.appUrl } })
+          : aform.mode === 'reset' ? sb.auth.resetPasswordForEmail(e, { redirectTo: CFG.appUrl + '?reset=1' })
+          : sb.auth.signInWithPassword({ email: e, password: w });
+        pr.then(function (res) {
+          aform.busy = false;
+          if (res.error) { aform.msg = authErr(res.error); renderAccount(); return; }
+          if (aform.mode === 'reset') { aform.mode = 'login'; aform.msg = 'メールを 送りました。届いた リンクから パスワードを 決めなおして ください。'; renderAccount(); return; }
+          if (aform.mode === 'signup' && res.data && !res.data.session) { aform.mode = 'login'; aform.msg = '確認メールを 送りました。メールの リンクを 開いてから、ここで ログインして ください。'; renderAccount(); return; }
+          // ログインできた: onAuthStateChange が つづきを する
+        }, function (err) { aform.busy = false; aform.msg = authErr(err); renderAccount(); });
+      });
+      p.appendChild(go);
+      var sw = el('div', 'rec-actions');
+      if (aform.mode !== 'login') sw.appendChild(btn('linkbtn', 'ログインへ', function () { aform.mode = 'login'; aform.msg = ''; renderAccount(); }));
+      if (aform.mode !== 'signup') sw.appendChild(btn('linkbtn', 'はじめての 人：アカウントを つくる', function () { aform.mode = 'signup'; aform.msg = ''; renderAccount(); }));
+      if (aform.mode === 'login') sw.appendChild(btn('linkbtn', 'パスワードを 忘れた', function () { aform.mode = 'reset'; aform.msg = ''; renderAccount(); }));
+      p.appendChild(sw);
+      box.appendChild(p);
+      var ip = el('div', 'panel'); ip.appendChild(el('h3', null, 'このアプリで できること'));
+      ip.appendChild(html('ul', 'muted', '<li>学年（小1〜中3）を えらぶと、その学年の もんだいが 出ます。</li><li>iPadの ペンで 書いて、自動で まるつけ。まちがえた 問題は なおすまで つぎに 進みません。</li><li>おうちの人が <b>じぶんで もんだいを 作れます</b>（カード／数字が 毎回 かわる 穴あき問題）。</li><li>登録から ' + (CFG.trialDays || 3) + '日間は 無料。つづける ときは 月 ¥' + (CFG.priceMonth || 3980).toLocaleString() + '、または 年 ¥' + (CFG.priceYear || 35760).toLocaleString() + '（一括）。' + (CFG.trialDays || 3) + '日以内に 購入すると 1か月 無料。</li>'));
+      box.appendChild(ip);
+      return;
+    }
+    var i = entInfo();
+    p.appendChild(el('h3', null, 'アカウント'));
+    p.appendChild(html('p', null, 'メール：<b>' + esc(acct.user.email || '') + '</b>'));
+    var st = i.state === 'trial' ? '無料期間中（あと ' + i.days + '日、' + fmtDate(i.end) + 'まで）' : i.state === 'active' ? (i.plan === 'year' ? '年払い' : '月払い') + 'で ご利用中（次回の 更新 ' + fmtDate(i.end) + '）' : i.state === 'past_due' ? 'お支払いが 確認できません（' + fmtDate(i.end) + '）' : '無料期間が 終わりました。つづけるには 購入して ください。';
+    p.appendChild(html('p', 'muted', '状態：<b>' + st + '</b>'));
+    if (!i.plan || i.state === 'expired') {
+      var buy = el('div', 'accs');
+      [['month', '月払い', '¥' + (CFG.priceMonth || 3980).toLocaleString() + ' / 月'], ['year', '年払い（一括）', '¥' + (CFG.priceYear || 35760).toLocaleString() + ' / 年']].forEach(function (o) {
+        var b = btn('acc', null, function () { startCheckout(o[0]); }); b.appendChild(el('span', null, o[1])); b.appendChild(el('small', null, o[2])); buy.appendChild(b);
+      });
+      p.appendChild(el('h3', null, '購入する'));
+      p.appendChild(buy);
+      if (i.state === 'trial') p.appendChild(el('p', 'muted', '無料期間の うちに 購入すると、はじめの 1か月は 無料です（お支払いは 1か月後から）。'));
+      p.appendChild(el('p', 'muted', 'お支払いは Stripe の 画面で 行います。カード情報は この アプリには 残りません。いつでも 解約できます。'));
+    }
+    var acts = el('div', 'rec-actions');
+    if (acct.ent && acct.ent.stripe_customer_id) acts.appendChild(btn('linkbtn', 'お支払いの 管理（解約・カードの 変更）', openPortal));
+    acts.appendChild(btn('linkbtn', '状態を 更新', function () { fetchEnt().then(function () { renderAccount(); }); }));
+    acts.appendChild(btn('linkbtn shu', 'ログアウト（この 端末の 記録は 消えます。クラウドには 残ります）', function () {
+      if (!confirm('ログアウトします。この 端末の 記録は 消えますが、クラウドに 保存された ものは ログインすると もどります。よろしいですか？')) return;
+      flushQueue(); sb.auth.signOut().then(function () { clearLocal(); location.reload(); });
+    }));
+    p.appendChild(acts);
+    box.appendChild(p);
+    if (i.state !== 'expired') { var back = el('div', 'panel'); back.appendChild(btn('btn sm', profile() ? 'ホームへ' : 'はじめに（なまえ・学年）へ', function () { if (profile()) { renderHome(); show('home'); } else { renderSetup(); show('setup'); } })); box.appendChild(back); }
+  }
+  function authErr(e) {
+    var m = (e && e.message) || '';
+    if (/Invalid login/i.test(m)) return 'メールアドレスか パスワードが ちがいます。';
+    if (/already registered/i.test(m)) return 'その メールアドレスは 登録ずみです。ログインして ください。';
+    if (/Email not confirmed/i.test(m)) return 'メールの 確認が まだです。届いた メールの リンクを 開いて ください。';
+    if (/rate limit/i.test(m)) return 'しばらく 待ってから もう一度 ためして ください。';
+    if (/fetch|network/i.test(m)) return 'ネットに つながって いません。';
+    return 'うまく いきませんでした。' + m;
+  }
+  function callFn(name, body) {
+    return sb.functions.invoke(name, { body: body || {} }).then(function (res) { if (res.error) throw res.error; return res.data; });
+  }
+  function startCheckout(plan) {
+    toastText('購入ページを ひらいて います…');
+    callFn('checkout', { plan: plan }).then(function (d) { if (d && d.url) location.href = d.url; else alert('購入ページを 開けませんでした。'); }, function (e) { alert('購入ページを 開けませんでした。' + ((e && e.message) || '')); });
+  }
+  function openPortal() { callFn('portal').then(function (d) { if (d && d.url) location.href = d.url; }, function () { alert('ひらけませんでした。'); }); }
+  function afterLogin() {   // ログイン直後: 利用権 → 同期 → 画面
+    return fetchEnt().then(pullAll).then(function (changed) {
+      acct.ready = true;
+      if (changed && acct.booted) { location.reload(); return; }
+      if (changed) { prof = loadProfiles(); }   // 起動時の 同期で 端末が かわった → プロフィールだけ 読みなおし、記録は reload で
+      if (changed && prof.current) { location.reload(); return; }
+      if (acct.booted) bootApp();
+    });
+  }
+  function cloudInit() {
+    return sb.auth.getSession().then(function (res) {
+      acct.user = res.data && res.data.session ? res.data.session.user : null;
+      sb.auth.onAuthStateChange(function (ev, session) {
+        var u = session ? session.user : null, was = acct.user && acct.user.id;
+        acct.user = u;
+        if (ev === 'SIGNED_IN' && u && u.id !== was) { afterLogin(); }
+        if (ev === 'SIGNED_OUT') { acct.ent = null; }
+        if (ev === 'PASSWORD_RECOVERY') { var np = prompt('あたらしい パスワード（8文字以上）'); if (np && np.length >= 8) sb.auth.updateUser({ password: np }).then(function () { alert('パスワードを 変えました。'); }); }
+      });
+      if (!acct.user) { acct.ready = true; return; }
+      return fetchEnt().then(pullAll).then(function (changed) { acct.ready = true; if (changed) { location.replace(location.pathname); } });
+    }, function () { acct.ready = true; });
+  }
+  function bootApp() {
+    acct.booted = true;
+    if (QS.gen) { renderPrint(); show('print'); document.body.classList.add('print-mode'); return; }
+    if (QS.paid === '1' && acct.user) { history.replaceState(null, '', location.pathname); var n = 0; (function poll() { fetchEnt().then(function () { if (entInfo().state === 'active' || n++ > 6) { toastText(entInfo().state === 'active' ? '🎉 ご購入 ありがとうございます' : '状態の 更新に 時間が かかって います'); bootApp(); } else setTimeout(poll, 2000); }); })(); return; }
+    if (hasCloud() && !acct.user) { renderAccount(); show('account'); return; }
+    if (!profile()) { renderSetup(); show('setup'); return; }
+    if (gated()) { renderAccount(); show('account'); return; }
+    renderHome(); show('home');
+  }
+
   var presetAdded = applyPresetPages();
   initGame(); save();
 
   // ---------- boot ----------
-  if (QS.gen) { renderPrint(); show('print'); document.body.classList.add('print-mode'); }
-  else if (!profile()) { renderSetup(); show('setup'); }
-  else { renderHome(); show('home'); }
+  if (hasCloud()) { cloudInit().then(bootApp, bootApp); } else bootApp();
 })();
 </script>
 

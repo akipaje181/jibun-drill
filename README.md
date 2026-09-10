@@ -43,8 +43,16 @@
 2. `node tools/verify.js <学年> math 400` を通す（式の検算・負の答え・答えと最後の式の一致・単位の桁）。
 3. `sw.js` の VERSION を上げる。
 
+## アカウント・同期・課金（Supabase＋Stripe）
+- `config.js` に `supabaseUrl` と `supabaseAnonKey` を入れると有効になる。空のあいだは端末だけで動く（ログイン画面も出ない）。
+- ログインは メール＋パスワード（確認メールあり）。ログインしないと使えない。登録から3日間は無料（`entitlements` を auth.users のトリガーが作る）。
+- 同期: `docs` テーブルに `profiles` / `rec.<子どもid>` / `content` を JSON で置く。端末で保存するたびに 1.5秒後にまとめて送る（`cloudPush`→`flushQueue`、オフラインは `jibun.syncq` に貯めて再送）。ログイン時に `pullAll` で新しい方にそろえ、変わっていたら reload。ログアウトで端末の `jibun.*` を消す。
+- 利用権: `entitlements`（status: trial/active/past_due/canceled）。期限切れなら `gated()` が true になり、学習画面は開けず「購入する」へ。オフライン時は7日以内の cache で判定。
+- 購入: Edge Function `checkout`（登録から3日以内なら trial 30日）→ Stripe Checkout → `?paid=1` で戻る。`stripe-webhook` が entitlements を更新。`portal` で解約・カード変更。
+- サーバ側は `supabase/`（migrations と functions）。デプロイは `supabase link` → `supabase db push` → `supabase functions deploy`。秘密の鍵は Supabase の Secrets（登録手順書 B-7）。
+
 ## まだ無いもの（プランの第2段階以降）
-- アカウント・複数端末の同期・課金（Supabase＋Stripe）
+- 特商法・規約・プライバシーポリシーのページ、紹介ページ、デモ動画
 - 写真の自動読み取り（サーバ経由の Claude API）
 - 小1・小3 の運営側の型ライブラリ、答えの種類 `ratio`（比）、座標の答え
 - 細部の文言辞書化（結果パネル・クエスト・ヘルプ）

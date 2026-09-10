@@ -1,6 +1,6 @@
 /* じぶんドリル service worker — offline cache */
-const VERSION = 'jibun-drill-v2';
-const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png',
+const VERSION = 'jibun-drill-v3';
+const CORE = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png',
   './packs/index.js', './packs/e2/math.js', './packs/e2/calc.js', './packs/e2/kanji.js', './packs/j1/math.js', './packs/j1/calc.js'];
 
 self.addEventListener('install', (e) => {
@@ -15,7 +15,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-const isFont = (url) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+const isFont = (url) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || url.hostname === 'cdn.jsdelivr.net';
 
 self.addEventListener('fetch', (e) => {
   const req = e.request;
