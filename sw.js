@@ -1,5 +1,5 @@
 /* じぶんドリル service worker — offline cache */
-const VERSION = 'jibun-drill-v3';
+const VERSION = 'jibun-drill-v4';
 const CORE = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png',
   './packs/index.js', './packs/e2/math.js', './packs/e2/calc.js', './packs/e2/kanji.js', './packs/j1/math.js', './packs/j1/calc.js'];
 
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
 
   // The page and the packs: newest version when online, cached copy when not.
-  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.indexOf('/packs/') >= 0) {
+  if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.indexOf('/packs/') >= 0 || url.pathname.endsWith('/config.js')) {
     e.respondWith(fetch(req).then((res) => { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); return res; }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html'))));
     return;
   }
