@@ -1,5 +1,5 @@
 /* じぶんドリル service worker — offline cache */
-const VERSION = 'jibun-drill-v4';
+const VERSION = 'jibun-drill-v5';
 const CORE = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-180.png',
   './packs/index.js', './packs/e2/math.js', './packs/e2/calc.js', './packs/e2/kanji.js', './packs/j1/math.js', './packs/j1/calc.js'];
 
