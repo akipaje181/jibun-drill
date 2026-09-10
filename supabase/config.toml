@@ -5,3 +5,8 @@ verify_jwt = false   # Stripe からの 呼び出しには JWT が ない（署�
 verify_jwt = true
 [functions.portal]
 verify_jwt = true
+
+# ログイン（メール認証）の 戻り先。supabase config push で 反映する
+[auth]
+site_url = "https://akipaje181.github.io/jibun-drill/"
+additional_redirect_urls = ["https://akipaje181.github.io/jibun-drill/", "https://akipaje181.github.io/jibun-drill/?reset=1", "http://localhost:8766/"]
