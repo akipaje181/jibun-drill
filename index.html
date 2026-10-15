@@ -382,6 +382,12 @@
   .medal b{font-family:var(--f-round); font-size:14px; display:block}
   .medal small{font-size:11px; color:var(--ink-soft); display:block; line-height:1.5}
   .medal.lock .ic{background:var(--rule-soft); border-color:var(--rule); filter:grayscale(1); opacity:.6}
+  .medal .ic.pic{background:none; border:0; width:62px; height:62px}      /* 絵の メダルは それ自体に ふちが ある */
+  .medal .ic.pic img{width:100%; height:100%; display:block}
+  .badge .mic{width:20px; height:20px; vertical-align:-5px; margin-right:2px}
+  .rankb{height:34px; width:auto; vertical-align:-9px; margin-right:6px}
+  .omikuji .opic{flex:0 0 auto; margin-right:2px}
+  .omikuji .opic img{display:block; width:52px; height:52px}
   .medal.lock{opacity:.75}
   .streak{font-family:var(--f-round); font-size:15px; margin:4px 0 0}
   .streak b{color:var(--shu-ink); font-size:20px}
@@ -2689,7 +2695,7 @@
     }
     var tags = el('div', 'gtags');
     ev.mates.forEach(function (m) { tags.appendChild(html('span', 'badge', '🤝 なかまが ふえた！「' + m.name + '」')); });
-    ev.badges.forEach(function (b) { tags.appendChild(html('span', 'badge', b.ic + ' メダル「' + b.name + '」')); });
+    ev.badges.forEach(function (b) { tags.appendChild(html('span', 'badge', medalPic(b) + ' メダル「' + b.name + '」')); });
     ev.decor.forEach(function (d) { tags.appendChild(html('span', 'badge', '🛋 へやに「' + d.name + '」が ふえた')); });
     if (ev.star) tags.appendChild(html('span', 'badge', '⭐ ★が ' + ev.star + 'こに なった！'));
     if (tags.children.length) p.appendChild(tags);
@@ -2800,16 +2806,22 @@
   function charSVG(o) { return '<svg class="char" viewBox="0 0 200 200" aria-hidden="true">' + charInner(o) + '</svg>'; }
 
   // マイルーム の 絵。まど（じかんで 昼夜）・カレンダー・本だな（5まいで 1さつ）・つくえ・ドリまる・なかま・かざり
+  var roomN = 0;
   function roomSVG() {
     var lv = levelOf().level, st = stageOf(lv), h = new Date().getHours(), night = h < 6 || h >= 18, evening = h >= 16 && h < 18;
     var sky = night ? '#2b3a67' : evening ? '#f9b872' : '#bfe3f7', d = game.decor, s = '';
     s += '<rect width="640" height="250" fill="#f6ecd2"/><rect y="250" width="640" height="110" fill="#d9b98c"/>';
     for (var x = 0; x < 640; x += 80) s += '<path d="M' + x + ' 250 v110" stroke="#c9a36f" stroke-width="1.5"/>';
     s += '<rect y="245" width="640" height="7" fill="#c9a36f"/>';
+    s += '<image href="./img/room-bg.webp" x="0" y="0" width="640" height="360" preserveAspectRatio="xMidYMid slice"/>';   // かべ と ゆか（上の ベタ塗りは 絵が 出ない ときの ひかえ）
     if (d.rug) s += '<ellipse cx="200" cy="318" rx="125" ry="30" fill="#e2857a"/><ellipse cx="200" cy="318" rx="95" ry="20" fill="none" stroke="#f4b9ae" stroke-width="5"/>';
-    s += '<rect x="60" y="40" width="170" height="130" rx="6" fill="' + sky + '" stroke="#fff" stroke-width="8"/>';
+    s += '<rect x="60" y="40" width="170" height="130" rx="6" fill="' + sky + '"/>';
     if (night) { s += '<circle cx="180" cy="75" r="16" fill="#fff6c9"/><circle cx="172" cy="70" r="14" fill="' + sky + '"/>'; [[90, 60], [120, 95], [150, 130], [105, 140], [200, 120]].forEach(function (p) { s += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="2" fill="#fff"/>'; }); }
     else { s += '<circle cx="180" cy="80" r="17" fill="' + (evening ? '#ff8c5a' : '#ffd166') + '"/><ellipse cx="110" cy="120" rx="26" ry="10" fill="#fff" opacity=".9"/><ellipse cx="128" cy="112" rx="18" ry="9" fill="#fff" opacity=".9"/>'; }
+    var wpic = night ? 'night' : evening ? 'evening' : (h >= 6 && h < 10) ? 'morning' : 'day', wcid = 'winclip' + (++roomN);
+    s += '<clipPath id="' + wcid + '"><rect x="60" y="40" width="170" height="130" rx="6"/></clipPath>';
+    s += '<image clip-path="url(#' + wcid + ')" href="./img/win-' + wpic + '.webp" x="60" y="40" width="170" height="130" preserveAspectRatio="xMidYMid slice"/>';
+    s += '<rect x="60" y="40" width="170" height="130" rx="6" fill="none" stroke="#fff" stroke-width="8"/>';
     s += '<path d="M145 40 v130 M60 105 h170" stroke="#fff" stroke-width="5"/>';
     s += '<path d="M40 30 h30 q-6 70 10 140 h-40z" fill="#f4a0a0"/><path d="M250 30 h-30 q6 70 -10 140 h40z" fill="#f4a0a0"/>';
     if (d.garland) { for (var g = 0; g < 8; g++) s += '<path d="M' + (20 + g * 80) + ' 14 l22 30 22 -30z" fill="' + COLORS[g % 6] + '"/>'; s += '<path d="M10 14 h620" stroke="#8f6a3e" stroke-width="2"/>'; }
@@ -2942,11 +2954,23 @@
   var MOODS = [['😄', 'さいこう'], ['😊', 'よかった'], ['😐', 'ふつう'], ['😢', 'つかれた']];
   function todayKey() { return dayKey(new Date().toISOString()); }
   function hashStr(t) { var h = 2166136261; for (var i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+  // 絵の メダル（30個ぶん 作った うち、この アプリに ある 26個）
+  var MEDAL_PIC = {
+    first: 1, perfect1: 1, perfect10: 1, streak3: 1, streak7: 1, streak30: 1,
+    card1: 1, s10: 1, s50: 1, s100: 1, goal7: 1, week1: 1,
+    master1: 1, master5: 1, master10: 1, weakwin: 1, weak10: 1, scan1: 1,
+    lessons5: 1, mates3: 1, quest1: 1, allclear1: 1, allclear7: 1, morning7: 1,
+    big1: 1, oks10: 1
+  };
+  function medalPic(b, cls) { return MEDAL_PIC[b.id] ? '<img class="' + (cls || 'mic') + '" src="./img/medal-' + b.id + '.webp" alt="">' : b.ic; }
+  function rankImg(st, cls) { return '<img class="' + (cls || 'rankb') + '" src="./img/rank-' + (st + 1) + '.webp" alt="">'; }   // だんかい 0〜6 → rank-1〜7
+  var OMI_PICS = ['clover', 'star', 'rainbow', 'hanamaru', 'music', 'cake'];   // おみくじの 絵（その日 かわらない）
+
   function fortune(k) {   // その日 かわらない おみくじ
     var h = hashStr(k + '|' + (game.name || '')), pick = function (arr, seed) { return arr[seed % arr.length]; };
     var tw = 0; LUCKS.forEach(function (l) { tw += l[1]; });
     var r = h % tw, luck = LUCKS[0][0]; for (var i = 0; i < LUCKS.length; i++) { if (r < LUCKS[i][1]) { luck = LUCKS[i][0]; break; } r -= LUCKS[i][1]; }
-    return { luck: luck, color: pick(LUCKY_COLORS, h >>> 4), item: pick(LUCKY_ITEMS, h >>> 9), line: pick(FORTUNE_LINES, h >>> 14) };
+    return { luck: luck, color: pick(LUCKY_COLORS, h >>> 4), item: pick(LUCKY_ITEMS, h >>> 9), line: pick(FORTUNE_LINES, h >>> 14), pic: pick(OMI_PICS, h >>> 19) };
   }
   function greet() { var h = new Date().getHours(); return h < 11 ? 'おはよう！' : h < 17 ? 'こんにちは！' : 'こんばんは！'; }
   function qday(map, k) { return map[k] || (map[k] = {}); }
@@ -3087,6 +3111,7 @@
     card.appendChild(hd);
     if (checked) {
       var om = el('div', 'omikuji');
+      om.appendChild(html('span', 'opic', '<img src="./img/omi-' + f.pic + '.webp" alt="">'));
       om.appendChild(html('span', null, 'きょうの うんせい<b class="luck">' + f.luck + '</b>'));
       om.appendChild(html('span', null, '<i class="dot" style="background:' + f.color[1] + '"></i>ラッキーカラー ' + f.color[0]));
       om.appendChild(el('span', null, '🍀 ラッキーアイテム ' + f.item));
@@ -3574,7 +3599,9 @@
     var lab = el('div', 'clabel'); lab.appendChild(el('b', null, (cute() ? '🏠 ' : '⭐ ') + T('grow'))); lab.appendChild(el('span', null, 'ひらく →'));
     card.insertBefore(lab, card.firstChild);
     var info = el('div', 'cinfo');
-    var nm = el('div', 'cname', cute() ? game.name : kidName()); nm.appendChild(el('small', null, 'Lv.' + lv.level + (cute() ? '　' + STAGES[stageOf(lv.level)][0] + '　なかま ' + Object.keys(game.mates).length + 'びき' : '　★ ' + starsOf(lv.level) + 'こ')));
+    var nm = el('div', 'cname');
+    if (cute()) nm.appendChild(html('span', null, rankImg(stageOf(lv.level))));   // だんかいの バッジ
+    nm.appendChild(html('span', null, cute() ? game.name : kidName())); nm.appendChild(el('small', null, 'Lv.' + lv.level + (cute() ? '　' + STAGES[stageOf(lv.level)][0] + '　なかま ' + Object.keys(game.mates).length + 'びき' : '　★ ' + starsOf(lv.level) + 'こ')));
     info.appendChild(nm);
     var bar = el('div', 'xpbar'), fill = el('i'); fill.style.width = Math.round(lv.into / lv.need * 100) + '%'; bar.appendChild(fill); info.appendChild(bar);
     var tx = el('div', 'xptxt'); tx.appendChild(el('span', null, 'あと ' + (lv.need - lv.into) + ' ポイントで Lv.' + (lv.level + 1)));
@@ -3687,7 +3714,8 @@
     var bg = el('div', 'medals');
     BADGES.forEach(function (b) {
       var got = game.badges[b.id], d = el('div', 'medal' + (got ? '' : ' lock'));
-      d.appendChild(el('div', 'ic', got ? b.ic : '？')); d.appendChild(el('b', null, b.name));
+      d.appendChild(got && MEDAL_PIC[b.id] ? html('div', 'ic pic', medalPic(b, 'mfull')) : el('div', 'ic', got ? b.ic : '？'));
+      d.appendChild(el('b', null, b.name));
       d.appendChild(el('small', null, got ? fmtDay(dayKey(got)) + ' ゲット' : b.desc));
       bg.appendChild(d);
     });
