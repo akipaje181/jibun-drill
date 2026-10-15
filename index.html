@@ -356,6 +356,27 @@
   .gres.up{background:linear-gradient(135deg, var(--shu-wash), var(--paper)); border-color:var(--shu); position:relative; overflow:hidden}
   .gres.up .gx{color:var(--shu-ink); font-size:20px}
   .confetti{position:absolute; top:-10px; width:8px; height:12px; border-radius:2px; opacity:.9; animation:fall 1.8s ease-in forwards}
+  /* ぜんぶ○・ぜんぶ なおせた の お祝い */
+  .cheer{position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; overflow:hidden; transition:opacity .4s}
+  .cheer.out{opacity:0}
+  .cheer::before{content:''; position:absolute; inset:0; background:var(--ground); opacity:.84}   /* うしろを そっと かくして 読みやすく */
+  .cheer .confetti{animation:fallBig 2s ease-in forwards}
+  @keyframes fallBig{to{transform:translateY(100vh) rotate(320deg); opacity:0}}
+  .cheer .cmsg{position:relative; display:grid; place-items:center; width:min(94vw,520px); aspect-ratio:1/1; max-height:56vh}
+  .cheer .cframe{position:absolute; inset:0}
+  .cheer .cframe img{width:100%; height:100%; object-fit:contain; animation:cheerPop .5s cubic-bezier(.2,1.4,.5,1)}
+  .cheer .cmsgin{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center}
+  .cheer .cwho{margin-top:-3vh; position:relative; z-index:2}
+  .cheer .cwho .char{width:min(30vh,210px); height:min(30vh,210px); animation:cheerPop .55s cubic-bezier(.2,1.4,.5,1)}
+  .cheer b, .cheer span{position:relative; z-index:1}
+  .cheer b{font-family:var(--f-round); font-size:44px; color:var(--shu); background:var(--paper); border:4px solid var(--shu); border-radius:22px; padding:14px 30px; box-shadow:0 10px 34px rgba(0,0,0,.22); animation:cheerPop .5s cubic-bezier(.2,1.4,.5,1)}
+  .cheer span{margin-top:12px; font-family:var(--f-round); font-size:17px; color:var(--ink); background:var(--paper); border-radius:999px; padding:6px 16px; box-shadow:0 4px 14px rgba(0,0,0,.14)}
+  @keyframes cheerPop{from{transform:scale(.5) rotate(-6deg); opacity:0} to{transform:scale(1) rotate(0); opacity:1}}
+  @media (max-width:560px){ .cheer b{font-size:34px; padding:12px 22px} }
+  .gres .fxband{display:block; width:100%; height:54px; background:url(./img/fx-levelup.webp) center/cover no-repeat; border-radius:8px; order:-1}
+  .fxwrap{position:relative; display:grid; place-items:center; width:100%; margin-top:6px}
+  .fxwrap::before{content:''; position:absolute; inset:0; background:url(./img/fx-medal.webp) center/contain no-repeat; opacity:.95}
+  .fxwrap .char{position:relative; z-index:1; width:118px; height:118px}
   @keyframes fall{to{transform:translateY(140px) rotate(300deg); opacity:0}}
   .toast{position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:40; background:var(--ink); color:var(--paper); font-family:var(--f-round); font-size:15px; padding:10px 18px; border-radius:999px; box-shadow:0 6px 20px rgba(0,0,0,.25); max-width:90vw}
 
@@ -1584,7 +1605,7 @@
       o.result.appendChild(fres);
       if (ev) o.result.appendChild(gameResultPanel(ev));
       o.graded = true;
-      if (score === o.items.length) { o.mainAction = null; o.againAction = null; setBar(o.nextLabel(), false); }
+      if (score === o.items.length) { chime('all'); cheerOverlay('ぜんぶ なおせた！', 'よく がんばったね'); o.mainAction = null; o.againAction = null; setBar(o.nextLabel(), false); }
       else {
         o.mainAction = function () { startFix(o); };
         o.againAction = function () { o.next(); };
@@ -1618,6 +1639,7 @@
     o.result.appendChild(gameResultPanel(gev));
     o.graded = true;
     var miss = o.items.length - score;
+    if (!miss) { chime('all'); cheerOverlay('ぜんぶ ○！', o.items.length + 'もん ぜんぶ あってた！'); }
     o.mainAction = null; o.againAction = null;
     if (miss) { o.mainAction = function () { startFix(o); }; setBar(T('fix_n', miss), true); }
     else setBar(o.nextLabel(), true);
@@ -2677,8 +2699,27 @@
     var total = 0; lines.forEach(function (l) { total += l[1]; });
     return gameEvent(total, { stamp: first, lines: lines });
   }
+  function cheerOverlay(main, sub) {   // ぜんぶ○・ぜんぶ なおせた の お祝い
+    var w = el('div', 'cheer'), msg = el('div', 'cmsg'), inn = el('div', 'cmsgin');
+    msg.appendChild(html('i', 'cframe', '<img src="./img/cheer-frame.webp" alt="">'));
+    inn.appendChild(el('b', null, main));
+    if (sub) inn.appendChild(el('span', null, sub));
+    msg.appendChild(inn); w.appendChild(msg);
+    if (cute()) w.appendChild(html('div', 'cwho', charSVG({ stage: stageOf(levelOf().level), color: game.color, wear: game.wear, mood: 'excited' })));
+    for (var i = 0; i < 20; i++) {
+      var c = el('i', 'confetti');
+      c.style.left = (3 + Math.random() * 94) + '%'; c.style.background = COLORS[i % COLORS.length];
+      c.style.animationDelay = (Math.random() * .5) + 's'; c.style.animationDuration = (1.4 + Math.random() * .8) + 's';
+      w.appendChild(c);
+    }
+    document.body.appendChild(w);
+    setTimeout(function () { w.classList.add('out'); }, 1100);
+    setTimeout(function () { if (w.parentNode) w.remove(); }, 1650);
+  }
+
   function gameResultPanel(ev) {
     var p = el('div', 'gres' + (ev.up ? ' up' : ''));
+    if (ev.up) p.appendChild(el('i', 'fxband'));   // レベルアップの かざり帯
     var mood = ev.up ? 'excited' : 'happy';
     p.appendChild(html('div', null, charSVG({ stage: stageOf(ev.level), color: game.color, wear: game.wear, mood: mood })));
     var gx = el('div', 'gx');
@@ -2699,6 +2740,7 @@
     ev.decor.forEach(function (d) { tags.appendChild(html('span', 'badge', '🛋 へやに「' + d.name + '」が ふえた')); });
     if (ev.star) tags.appendChild(html('span', 'badge', '⭐ ★が ' + ev.star + 'こに なった！'));
     if (tags.children.length) p.appendChild(tags);
+    if (ev.badges.length && cute()) p.appendChild(html('div', 'fxwrap', charSVG({ stage: stageOf(ev.level), color: game.color, wear: game.wear, mood: 'excited' })));   // メダルを もらった ときだけ
     var nrl = nextRewardLine(); if (nrl) p.appendChild(html('div', 'nextrw', nrl));
     p.appendChild(btn('linkbtn', 'マイルームを 見る →', function () { renderGrow(); show('grow'); }));
     if (ev.up) for (var i = 0; i < 18; i++) { var c = el('i', 'confetti'); c.style.left = (5 + Math.random() * 90) + '%'; c.style.background = COLORS[i % COLORS.length]; c.style.animationDelay = (Math.random() * .6) + 's'; p.appendChild(c); }
@@ -2720,7 +2762,7 @@
     try {
       var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       actx = actx || new AC(); var now = actx.currentTime;
-      var notes = kind === 'up' ? [523, 659, 784, 1047] : [784, 1047];
+      var notes = kind === 'up' ? [523, 659, 784, 1047] : kind === 'all' ? [523, 587, 659, 698, 784] : [784, 1047];
       notes.forEach(function (f, i) {
         var o = actx.createOscillator(), g = actx.createGain(); o.type = 'triangle'; o.frequency.value = f;
         g.gain.setValueAtTime(0.0001, now + i * .12); g.gain.exponentialRampToValueAtTime(0.25, now + i * .12 + .02); g.gain.exponentialRampToValueAtTime(0.0001, now + i * .12 + .3);
