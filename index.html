@@ -22,6 +22,12 @@
   body{margin:0}
   [hidden]{display:none !important}
   img{max-width:100%}
+  /* 起動画面（ひらいた すぐ あとの 白い 画面を なくす） */
+  #splash{position:fixed; inset:0; z-index:200; display:grid; place-items:center; background:var(--ground); transition:opacity .45s ease}
+  #splash img{width:min(82vw,520px); height:auto; animation:spPop .55s cubic-bezier(.2,1.4,.5,1)}
+  #splash.out{opacity:0; pointer-events:none}
+  @keyframes spPop{from{transform:scale(.88)} to{transform:none}}   /* opacity は 動かさない（アニメが 止まると 絵が 消えるため） */
+  @media (prefers-reduced-motion: reduce){ #splash img{animation:none} }
   :root{
     --paper:#ffffff; --ground:#f2eee4;
     --ink:#23211d; --ink-soft:#6f695d; --ink-faint:#9c9587;
@@ -667,6 +673,8 @@
 </style>
 </head>
 <body>
+
+<div id="splash"><img src="./img/splash.webp" alt="" width="900" height="340"></div>
 
 <div class="top"><div class="wrap">
   <button type="button" class="back" id="back" hidden>‹ ホーム</button>
@@ -4145,6 +4153,7 @@
   }
   function bootApp() {
     acct.booted = true;
+    setTimeout(hideSplash, 120);   // 画面が できてから 消す
     if (QS.gen) { renderPrint(); show('print'); document.body.classList.add('print-mode'); return; }
     if (QS.paid === '1' && acct.user) { history.replaceState(null, '', location.pathname); var n = 0; (function poll() { fetchEnt().then(function () { if (entInfo().state === 'active' || n++ > 6) { toastText(entInfo().state === 'active' ? '🎉 ご購入 ありがとうございます' : '状態の 更新に 時間が かかって います'); bootApp(); } else setTimeout(poll, 2000); }); })(); return; }
     if (hasCloud() && !acct.user) { renderAccount(); show('account'); return; }
@@ -4156,8 +4165,19 @@
   var presetAdded = applyPresetPages();
   initGame(); save();
 
+  // 起動画面：画面が できたら そっと 消す（さいてい 0.5秒は 出す）
+  var splashT0 = Date.now();
+  function hideSplash() {
+    var sp = document.getElementById('splash'); if (!sp) return;
+    setTimeout(function () {
+      sp.classList.add('out');
+      setTimeout(function () { if (sp.parentNode) sp.remove(); }, 600);
+    }, Math.max(0, 500 - (Date.now() - splashT0)));
+  }
+
   // ---------- boot ----------
   if (hasCloud()) { cloudInit().then(bootApp, bootApp); } else bootApp();
+  setTimeout(hideSplash, 6000);   // つながらない ときでも かならず 消す
 })();
 </script>
 
